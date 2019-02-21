@@ -8,10 +8,11 @@
 #define JpN 7
 #define JpR 6
 //#######################ユーザーが変更するところ#######################
-float threthord =  0.1;//閾値 (0~1)
+float threthord =  0.7;//閾値 (0~1)
 int PulseLen = 10;   //パルス長[ms]
 //##############################################
 int cnt = 0;//設定用カウンタ
+
 
 
 void setup() {
@@ -32,6 +33,8 @@ void setup() {
 void loop() {
   int setuplabel = 0;
   String tempstr;
+
+  led(threthord * 10);
   
   label: //ジャンプ用ラベル
   
@@ -60,7 +63,7 @@ void loop() {
    }
   }
 
-  
+  led(PulseLen / 10);
   while(setuplabel == 0){ //パルス長設定する用
      if(digitalRead(JpN) == 0){
       cnt++;
@@ -105,7 +108,8 @@ void loop() {
     //Serial.print("|");
     //Serial.println(maxdata);
     
-    if(data_f < threthord &&  millis() - before_time > 100){ //ノイズが来た時に連続して反応しないように7[Hz]の T = 140[ms],少なめに見積もって100[ms]経過しないと次のパルスを出さない
+    if(data_f > threthord &&  millis() - before_time > 100){ //ノイズが来た時に連続して反応しないように7[Hz]の T = 140[ms],少なめに見積もって100[ms]経過しないと次のパルスを出さない
+              //ここの不等号を入れ替えて上ピーク・下ピーク切り替え可能
       before_time = millis();
       digitalWrite(TTLPin,HIGH);
       delay(PulseLen);
