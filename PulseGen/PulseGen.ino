@@ -1,3 +1,4 @@
+/*
 #define SigIn A0
 #define SW 8
 #define TTLPin 13
@@ -7,6 +8,20 @@
 #define LEDPinR 2
 #define JpN 7
 #define JpR 6
+*/
+
+
+#define SigIn A0
+#define SW 8
+#define TTLPin 13
+#define LEDPin4 6 //LED E
+#define LEDPin3 5 //LED E
+#define LEDPin2 4
+#define LEDPin1 3
+#define LEDPin0 2
+#define JpN 10
+#define JpR 9
+
 //#######################ユーザーが変更するところ#######################
 float threthord =  0.7;//閾値 (0~1)
 int PulseLen = 10;   //パルス長[ms]
@@ -22,10 +37,11 @@ void setup() {
   pinMode(JpR,INPUT_PULLUP);
   
   pinMode(TTLPin,OUTPUT);
-  pinMode(LEDPinE,OUTPUT);
-  pinMode(LEDPinW,OUTPUT);
-  pinMode(LEDPinN,OUTPUT);
-  pinMode(LEDPinR,OUTPUT);
+  pinMode(LEDPin0,OUTPUT);
+  pinMode(LEDPin1,OUTPUT);
+  pinMode(LEDPin2,OUTPUT);
+  pinMode(LEDPin3,OUTPUT);
+  pinMode(LEDPin4,OUTPUT);
   pinMode(A1,OUTPUT);
   Serial.begin(9600);
 }
@@ -33,16 +49,16 @@ void setup() {
 void loop() {
   int setuplabel = 0;
   String tempstr;
-
-  led(threthord * 10);
   
   label: //ジャンプ用ラベル
+  led(threthord * 10);
+  
   
    while(true){ //閾値設定する用
     if(digitalRead(JpN) == 0){
       cnt++;
       threthord = led(cnt);
-      delay(500);
+      delay(200);
     }else if(digitalRead(SW) == 1){
      setuplabel == 1;
      break; 
@@ -68,7 +84,7 @@ void loop() {
      if(digitalRead(JpN) == 0){
       cnt++;
       PulseLen = 100 * led(cnt);
-      delay(500);
+      delay(200);
     }else if(digitalRead(SW) == 1){
      setuplabel == 1;
      break;
@@ -80,9 +96,9 @@ void loop() {
   led(0);
 
   while(digitalRead(SW) == 0 && setuplabel == 0){ //開始スイッチ待ち
-    digitalWrite(LEDPinE,HIGH);
+    digitalWrite(LEDPin4,HIGH);
     delay(50);
-    digitalWrite(LEDPinE,LOW);
+    digitalWrite(LEDPin4,LOW);
     delay(50);
   }
 
@@ -104,7 +120,7 @@ void loop() {
 
   while(true){
     data_f = analogRead(SigIn) / maxdata;
-    //Serial.print(data_f);
+    Serial.println(data_f);
     //Serial.print("|");
     //Serial.println(maxdata);
     
@@ -135,76 +151,103 @@ float led (int num){
   switch(num){
 
     case 0:
-      //digitalWrite(LEDPinE,LOW);
-      digitalWrite(LEDPinW,LOW);
-      digitalWrite(LEDPinN,LOW);
-      digitalWrite(LEDPinR,LOW);
+      digitalWrite(LEDPin3,LOW);
+      digitalWrite(LEDPin2,LOW);
+      digitalWrite(LEDPin1,LOW);
+      digitalWrite(LEDPin0,LOW);
       break;
 
     case 1:
-    //digitalWrite(LEDPinE,LOW);
-      digitalWrite(LEDPinW,LOW);
-      digitalWrite(LEDPinN,LOW);
-      digitalWrite(LEDPinR,HIGH);
+      digitalWrite(LEDPin3,LOW);
+      digitalWrite(LEDPin2,LOW);
+      digitalWrite(LEDPin1,LOW);
+      digitalWrite(LEDPin0,HIGH);
       return 0.1;
       break;
       
     case 2:
-    //digitalWrite(LEDPinE,LOW);
-      digitalWrite(LEDPinW,LOW);
-      digitalWrite(LEDPinN,HIGH);
-      digitalWrite(LEDPinR,LOW);
+      digitalWrite(LEDPin3,LOW);
+      digitalWrite(LEDPin2,LOW);
+      digitalWrite(LEDPin1,HIGH);
+      digitalWrite(LEDPin0,LOW);
       return 0.2;
       break;
 
     case 3:
-    //digitalWrite(LEDPinE,LOW);
-      digitalWrite(LEDPinW,LOW);
-      digitalWrite(LEDPinN,HIGH);
-      digitalWrite(LEDPinR,HIGH);
+      digitalWrite(LEDPin3,LOW);
+      digitalWrite(LEDPin2,LOW);
+      digitalWrite(LEDPin1,HIGH);
+      digitalWrite(LEDPin0,HIGH);
       return 0.3;
       break;
 
    case 4:
-    //digitalWrite(LEDPinE,LOW);
-      digitalWrite(LEDPinW,HIGH);
-      digitalWrite(LEDPinN,LOW);
-      digitalWrite(LEDPinR,LOW);
+      digitalWrite(LEDPin3,LOW);
+      digitalWrite(LEDPin2,HIGH);
+      digitalWrite(LEDPin1,LOW);
+      digitalWrite(LEDPin0,LOW);
       return  0.4;
       break;
 
    case 5:
-    //digitalWrite(LEDPinE,LOW);
-      digitalWrite(LEDPinW,HIGH);
-      digitalWrite(LEDPinN,LOW);
-      digitalWrite(LEDPinR,HIGH);
+      digitalWrite(LEDPin3,LOW);
+      digitalWrite(LEDPin2,HIGH);
+      digitalWrite(LEDPin1,LOW);
+      digitalWrite(LEDPin0,HIGH);
       return 0.5;
       break;
 
    case 6:
-    //digitalWrite(LEDPinE,LOW);
-      digitalWrite(LEDPinW,HIGH);
-      digitalWrite(LEDPinN,HIGH);
-      digitalWrite(LEDPinR,LOW);
+      digitalWrite(LEDPin3,LOW);
+      digitalWrite(LEDPin2,HIGH);
+      digitalWrite(LEDPin1,HIGH);
+      digitalWrite(LEDPin0,LOW);
       return 0.6;
       break;
 
     case 7:
-    //digitalWrite(LEDPinE,LOW);
-      digitalWrite(LEDPinW,HIGH);
-      digitalWrite(LEDPinN,HIGH);
-      digitalWrite(LEDPinR,HIGH);
+      digitalWrite(LEDPin3,LOW);
+      digitalWrite(LEDPin2,HIGH);
+      digitalWrite(LEDPin1,HIGH);
+      digitalWrite(LEDPin0,HIGH);
       return 0.7;
       break;
 
+     case 8:
+      digitalWrite(LEDPin3,HIGH);
+      digitalWrite(LEDPin2,LOW);
+      digitalWrite(LEDPin1,LOW);
+      digitalWrite(LEDPin0,LOW);
+      return 0.8;
+      break;
+
+     case 9:
+      digitalWrite(LEDPin3,HIGH);
+      digitalWrite(LEDPin2,LOW);
+      digitalWrite(LEDPin1,LOW);
+      digitalWrite(LEDPin0,HIGH);
+      return 0.9;
+      break;
+
+     case 10:
+      digitalWrite(LEDPin3,HIGH);
+      digitalWrite(LEDPin2,LOW);
+      digitalWrite(LEDPin1,HIGH);
+      digitalWrite(LEDPin0,LOW);
+      return 1.0;
+      break;
+
+
+
+
     default:
-      digitalWrite(LEDPinW,LOW);
-      digitalWrite(LEDPinN,LOW);
-      digitalWrite(LEDPinR,LOW);
+      digitalWrite(LEDPin3,LOW);
+      digitalWrite(LEDPin2,LOW);
+      digitalWrite(LEDPin1,LOW);
+      digitalWrite(LEDPin0,LOW);
       cnt = 0;
       break;
     
   }
   
 }
-
