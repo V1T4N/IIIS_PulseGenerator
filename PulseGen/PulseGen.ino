@@ -50,7 +50,7 @@ void loop() {
   int setuplabel = 0;
   String tempstr;
   
-  label: //ジャンプ用ラベル
+  
   led(threthord * 10);
   
   
@@ -64,13 +64,13 @@ void loop() {
      break; 
    }else if(digitalRead(JpR) == 0){
       led(0);
-      delay(200);
+      delay(100);
       led(1);
-      delay(200);
+      delay(100);
       led(2);
-      delay(200);
+      delay(100);
       led(4);
-      delay(200);
+      delay(100);
       led(7);
       delay(1000);
       led(0);
@@ -89,22 +89,50 @@ void loop() {
      setuplabel == 1;
      break;
     }else if(digitalRead(JpR) == 0){
-    break;
+      led(0);
+      delay(200);
+      led(7);
+      delay(200);
+      led(4);
+      delay(100);
+      led(2);
+      delay(100);
+      led(1);
+      delay(1000);
+      led(0);
+      break;
     }
   }
 
   led(0);
-
-  while(digitalRead(SW) == 0 && setuplabel == 0){ //開始スイッチ待ち
-    digitalWrite(LEDPin4,HIGH);
-    delay(50);
-    digitalWrite(LEDPin4,LOW);
-    delay(50);
-  }
-
+  
   float maxdata = 0;
   int data = 0;
+  
+  label: //ジャンプ用ラベル
+  delay(500);
+  while(digitalRead(SW) == 0 && setuplabel == 0){ //開始スイッチ待ち
+    if(maxdata == 0){
+      digitalWrite(LEDPin4,HIGH);
+      delay(50);
+      digitalWrite(LEDPin4,LOW);
+      delay(50);
+     }else{
+      digitalWrite(LEDPin4,HIGH);
+      digitalWrite(LEDPin3,LOW);
+      delay(50);
+     }
+    while(digitalRead(JpR) == 0){
+      digitalWrite(LEDPin3,HIGH);
+      data = analogRead(SigIn);
+      if(data > maxdata){
+        maxdata = data;
+      }
+    }
+  }
 
+  
+  /*
   while(maxdata < 10){ //1000msの間の最大値を取る．一定以下の場合失敗とみなして再度
     for(int i = 0; i<1000; i++){
       data = analogRead(SigIn);
@@ -114,21 +142,29 @@ void loop() {
       }
     }
   }
-  
+*/
+  int flag = 1; //ダミーパルス用フラグ
   float data_f;
   unsigned long before_time = millis();
 
   while(true){
     data_f = analogRead(SigIn) / maxdata;
-    Serial.println(data_f);
+    //Serial.println(data_f);
     //Serial.print("|");
     //Serial.println(maxdata);
     
     if(data_f > threthord &&  millis() - before_time > 100){ //ノイズが来た時に連続して反応しないように7[Hz]の T = 140[ms],少なめに見積もって100[ms]経過しないと次のパルスを出さない
-              //ここの不等号を入れ替えて上ピーク・下ピーク切り替え可能
       before_time = millis();
+      flag = 0;
       digitalWrite(TTLPin,HIGH);
       delay(PulseLen);
+    }else if(millis() - before_time > 160 && flag == 0){
+      before_time = millis();
+      flag = 1; //2回連続ではダミーパルスを出さないようにする
+      digitalWrite(TTLPin,HIGH);
+      led(7);
+      delay(PulseLen);
+      
     }else if(digitalRead(SW) == 0){//フットスイッチが離されたら
       delay(10);
       if(digitalRead(SW) == 0){ //チャタリング防止のため10[ms]待つ
@@ -138,6 +174,7 @@ void loop() {
       }
     }else{
       digitalWrite(TTLPin,LOW);
+      led(0);
     }
   }
 
