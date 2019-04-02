@@ -26,7 +26,7 @@
 float threthord =  0.7;//閾値 (0~1)
 int PulseLen = 10;   //パルス長[ms]
 //##############################################
-int cnt = 0;//設定用カウンタ
+int cnt = threthord*10 ;//設定用カウンタ
 
 
 
@@ -144,16 +144,17 @@ void loop() {
   }
 */
   int flag = 1; //ダミーパルス用フラグ
-  float data_f;
+  float data_1;
+  float data_2;
+  float data_3;
   unsigned long before_time = millis();
 
   while(true){
-    data_f = analogRead(SigIn) / maxdata;
-    //Serial.println(data_f);
-    //Serial.print("|");
-    //Serial.println(maxdata);
-    
-    if(data_f > threthord &&  millis() - before_time > 100){ //ノイズが来た時に連続して反応しないように7[Hz]の T = 140[ms],少なめに見積もって100[ms]経過しないと次のパルスを出さない
+    data_1 = analogRead(SigIn) / maxdata;
+    data_2 = analogRead(SigIn) / maxdata;
+    data_3 = analogRead(SigIn) / maxdata;
+    //2019_4_2 ピーク値をグラフのを使って検出する
+    if(data_2 > threthord && data_1 - data_2 < 0 && data_2 - data_3 > 0 &&  millis() - before_time > 100){ //ノイズが来た時に連続して反応しないように7[Hz]の T = 140[ms],少なめに見積もって100[ms]経過しないと次のパルスを出さない
       before_time = millis();
       flag = 0;
       digitalWrite(TTLPin,HIGH);
