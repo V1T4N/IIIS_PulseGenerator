@@ -9,6 +9,9 @@ int adc_key_in  = 0;
 #define btnSELECT 4
 #define btnNONE   5
 
+#define SW 2
+#define IN A1
+
 LiquidCrystal lcd(8, 9, 4, 5, 6, 7);
 
 int th = 0;
@@ -117,15 +120,78 @@ lcd.print(phase);
 
 void setup() {
   lcd.begin(16, 2);
+  pinMode(SW,INPUT_PULLUP);
+  Serial.begin(9600);
   
 }
 
 void loop() {
-  if(change_th() == 1) digitalWrite(13,HIGH);
-  delay(50);
-  if(change_len() == 1) digitalWrite(13,HIGH);
-  delay(50);
-  if(change_phase() == 1) digitalWrite(13,HIGH);
-  delay(50);
+  while(true){
+    if(change_th() == 1) break;
+    delay(50);
+    if(change_len() == 1) break;
+    delay(50);
+    if(change_phase() == 1) break;
+    delay(50);
+  }
+ 
+  label1: //ジャンプ用ラベル
   
+  lcd.clear(); 
+  lcd.print("waiting");
+  delay(1000);
+
+  float ave = 0;
+  float sd = 0;
+  while(digitalRead(SW) == 0){
+    //lcd.setCursor(0,0); 
+    //lcd.print("waiting");
+
+    long i = 0;
+    int data[256];
+    long sum = 0;
+    long sum2 = 0;
+
+    if(read_LCD_buttons() == 0){
+      for(int i = 0; i< 256;i++){
+        lcd.setCursor(0,0);
+        lcd.print("setting...");
+        data[i] = analogRead(IN);
+        sum = sum + data[i];
+        ave = sum / i;
+      }
+      for(int j = 0; j < 256; j++){
+        sum2 = sum2 + pow((data[j] - ave),2);
+      }
+      sd = pow(sum2/256,0.5); 
+      break;
+    }
+  }
+  
+
+  lcd.setCursor(0,0); 
+  lcd.print("ave=");
+  lcd.print(ave);
+  lcd.setCursor(0,1);
+  lcd.print("sd=");
+  lcd.print(sd);
+  lcd.print("waiting");
+
+  byte flag = 0;
+  while(true){
+    if(digitalRead(SW) == 1){
+      if(flag == 0){
+        lcd.clear();
+        flag = 1;
+      }
+      if(read_LCD_buttons() == 0){
+        goto label1;
+      }
+      float out = (analogRead(IN) - ave) / sd;
+      lcd.setCursor(0,0); 
+      lcd.print(out);
+      Serial.println(out);
+    }
+    
+  }
 }

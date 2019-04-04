@@ -3,6 +3,9 @@ import matplotlib
 
 import matplotlib.pyplot as plt
 
+from matplotlib.widgets import Slider
+
+
 def min_max(x, axis=None):
     min = x.min(axis=axis, keepdims=True)
     max = x.max(axis=axis, keepdims=True)
@@ -25,13 +28,61 @@ try:
         data2 = DataArr_n[i+1]
         data3 = DataArr_n[i+2]
 
-        if data > 0.7 and  data1-data2 < 0 and data2 - data3 > 0 and i - before_i > 10:
-            plt.plot(i+3,data2,marker='.')
+        if data > 0.6 and  data1-data2 < 0 and data2 - data3 > 0 and i - before_i > 10:
+            plt.subplot(2, 1, 1)
+            graph1, = plt.plot(i+2,data2,marker='.') 
+
+            phase = 19 ##phase
+            plt.subplot(2, 1, 2)
+            graph2, = plt.plot(i+phase,DataArr_n[i+phase],marker='.') ##add phase
             before_i = i
             
 except:
     _ = 0
+
+plt.subplot(2, 1, 1)
 plt.plot(xaxis,DataArr_n,c = 'g',linewidth = '0.5')
 
+plt.subplot(2, 1, 2)
+plt.plot(xaxis,DataArr_n,c = 'g',linewidth = '0.5')
+
+"""
+
+def threshold_update(slider_val):
+    phase =  slider_val
+    plt.close()
+
+    try:
+        for i ,data in enumerate(DataArr_n):
+            data1 = DataArr_n[i]
+            data2 = DataArr_n[i+1]
+            data3 = DataArr_n[i+2]
+
+            if data > 0.6 and  data1-data2 < 0 and data2 - data3 > 0 and i - before_i > 10:
+                plt.subplot(2, 1, 1)
+                graph1, = plt.plot(i+2,data2,marker='.') 
+
+                ##phase
+                plt.subplot(2, 1, 2)
+                graph2, = plt.plot(i+phase,DataArr_n[i+phase],marker='.') ##add phase
+                before_i = i
+            
+    except:
+        _ = 0
+
+    # グラフの再描画
+    #plt.canvas.draw_idle()
+    plt.show()
+
+# スライダーの表示位置
+slider_pos = plt.axes([0.1, 0.01, 0.8, 0.03])
+
+# Sliderオブジェクトのインスタンス作成
+threshold_slider = Slider(slider_pos, 'd', 0, 100, valinit=0)
+
+# スライダーの値が変更された場合の処理を呼び出し
+threshold_slider.on_changed(threshold_update)
+
+"""
 
 plt.show()
