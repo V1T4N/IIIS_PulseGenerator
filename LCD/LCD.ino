@@ -21,24 +21,19 @@ float th = 0;
 int len = 0;
 int phase = 0;
 
-
-void timer_int(){
-    
-}
-
 int read_LCD_buttons(){
- adc_key_in = analogRead(0);      // read the value from the sensor 
- // my buttons when read are centered at these valies: 0, 144, 329, 504, 741
- // we add approx 50 to those values and check to see if we are close
- if (adc_key_in > 1000) return btnNONE; // We make this the 1st option for speed reasons since it will be the most likely result
- // For V1.1 us this threshold
- if (adc_key_in < 50)   return btnRIGHT;  
- if (adc_key_in < 250)  return btnUP; 
- if (adc_key_in < 450)  return btnDOWN; 
- if (adc_key_in < 650)  return btnLEFT; 
- if (adc_key_in < 850)  return btnSELECT;  
+  adc_key_in = analogRead(0);      // read the value from the sensor 
+  // my buttons when read are centered at these valies: 0, 144, 329, 504, 741
+  // we add approx 50 to those values and check to see if we are close
+  if (adc_key_in > 1000) return btnNONE; // We make this the 1st option for speed reasons since it will be the most likely result
+  // For V1.1 us this threshold
+  if (adc_key_in < 50)   return btnRIGHT;  
+  if (adc_key_in < 250)  return btnUP; 
+  if (adc_key_in < 450)  return btnDOWN; 
+  if (adc_key_in < 650)  return btnLEFT; 
+  if (adc_key_in < 850)  return btnSELECT;  
 
- return btnNONE;  // when all others fail, return this...
+  return btnNONE;  // when all others fail, return this...
 }
 
 int change_th(){
@@ -110,7 +105,7 @@ int change_phase(){
           break;
       
     }
-    if(th == 99 || th < 0 ) th = 0;
+    if(phase == 99 || phase < 0 ) th = 0;
   }
 }
 
@@ -131,13 +126,13 @@ void setup() {
   pinMode(SW,INPUT_PULLUP);
   pinMode(TTLPin,OUTPUT);
   Serial.begin(9600);
- // MsTimer2::set(1, timer_int);
-  //MsTimer2::start();
+  MsTimer2::set(1, timer1mS);
+  MsTimer2::start();
   
 }
 
 void loop() {
-  while(true){
+  while(true){ //設定用ループ
     if(change_th() == 1) break;
     delay(200);
     if(change_len() == 1) break;
@@ -154,30 +149,30 @@ void loop() {
 
   float ave = 0;
   float sd = 0;
-  while(digitalRead(SW) == 0){
+  //while(digitalRead(SW) == 0){
     //lcd.setCursor(0,0); 
     //lcd.print("waiting");
 
-    long i = 0;
-    int data[256];
-    long sum = 0;
-    long sum2 = 0;
+  long i = 0;
+  int data[256];
+  long sum = 0;
+  long sum2 = 0;
 
-    if(read_LCD_buttons() == 0){
-      for(int i = 0; i< 256;i++){
-        lcd.setCursor(0,0);
-        lcd.print("setting...");
-        data[i] = analogRead(IN);
-        sum = sum + data[i];
-        ave = sum / i;
-      }
-      for(int j = 0; j < 256; j++){
-        sum2 = sum2 + pow((data[j] - ave),2);
-      }
-      sd = pow(sum2/256,0.5); 
-      break;
+  if(read_LCD_buttons() == 0){
+    for(int i = 0; i< 256;i++){
+      lcd.setCursor(0,0);
+      lcd.print("setting...");
+      data[i] = analogRead(IN);
+      sum = sum + data[i];
+      ave = sum / i;
     }
+    for(int j = 0; j < 256; j++){
+      sum2 = sum2 + pow((data[j] - ave),2);
+    }
+    sd = pow(sum2/256,0.5); 
+    break;
   }
+  //}
   
 
   lcd.setCursor(0,0); 
@@ -191,14 +186,17 @@ void loop() {
   byte flag = 0;
   byte flag_d = 1; //ダミーパルス用フラグ
   byte TTL_flag = 0;
+  byte Phase_Flag = 0;
   unsigned long TTL_time = 0;
+  unsigned long Phase_time = 0;
+
   float out_1;
   float out_2;
   float out_3;
   
   unsigned long before_time = millis();
   
-  while(true){
+  while(true){ //測定時メインループ
     if(digitalRead(SW) == 1){ //フットスイッチが押されている時
       if(flag == 0){ //初回にLCDクリア
         lcd.clear();
@@ -226,11 +224,17 @@ void loop() {
         //digitalWrite(TTLPin,HIGH);
         //delay(len);
       }
-      if(TTL_flag == 1 && millis() - TTL_time > phase){
-        digitalWrite(TTLPin,HIGH);
-        delay(len);
+      if(TTL_flag == 1 && millis() - TTL_time > phase){ //TTLフラグONからphase分立ったら実行される
+        //digitalWrite(TTLPin,HIGH);
+        //delay(len);
+        Phase_time = millis();
+        Phase_Flag = 1;
+        digitalWrite(TTLPin,HIGH)
         TTL_flag = 0;
-       }
+      }if(Phase_Flag == 1 && millis() - Phase_time > len){ //パルスの発生時間がlenを超えたらLOWにする
+        digitalWrite(TTLPin,LOW);
+        Phase_Flag = 0;
+      }
         digitalWrite(TTLPin,LOW); 
         lcd.setCursor(0,0); 
         lcd.print(out_1);
