@@ -122,8 +122,8 @@ lcd.setCursor(0,1);
 lcd.print("Len=");
 lcd.print(len);
 //lcd.setCursor(0,1); 
-//lcd.print(" ph=");
-//lcd.print(phase);
+lcd.print(" ph=");
+lcd.print(phase);
 }
 
 void setup() {
@@ -142,8 +142,8 @@ void loop() {
     delay(200);
     if(change_len() == 1) break;
     delay(200);
-    //if(change_phase() == 1) break;
-    //delay(200);
+    if(change_phase() == 1) break;
+    delay(200);
   }
  
   label1: //ジャンプ用ラベル
@@ -190,7 +190,8 @@ void loop() {
 
   byte flag = 0;
   byte flag_d = 1; //ダミーパルス用フラグ
-
+  byte TTL_flag = 0;
+  unsigned long TTL_time = 0;
   float out_1;
   float out_2;
   float out_3;
@@ -213,14 +214,23 @@ void loop() {
       if(out_1 > th && out_1 - out_2 < 0 && out_2 - out_3 >= 0 &&  millis() - before_time > 100){ //ノイズが来た時に連続して反応しないように7[Hz]の T = 140[ms],少なめに見積もって100[ms]経過しないと次のパルスを出さない
         before_time = millis();
         flag_d = 0;
-        digitalWrite(TTLPin,HIGH);
-        delay(len);
+        TTL_flag = 1;
+        TTL_time = millis();
+        //digitalWrite(TTLPin,HIGH);
+        //delay(len);
       }else if(millis() - before_time > 160 && flag_d == 0){
         before_time = millis();
         flag_d = 1; //2回連続ではダミーパルスを出さないようにする
+        TTL_flag = 1;
+        TTL_time = millis();
+        //digitalWrite(TTLPin,HIGH);
+        //delay(len);
+      }
+      if(TTL_flag == 1 && millis() - TTL_time > phase){
         digitalWrite(TTLPin,HIGH);
         delay(len);
-      }
+        TTL_flag = 0;
+       }
         digitalWrite(TTLPin,LOW); 
         lcd.setCursor(0,0); 
         lcd.print(out_1);
