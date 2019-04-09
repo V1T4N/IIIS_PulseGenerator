@@ -1,5 +1,7 @@
 
 #include <LiquidCrystal.h>
+#include <MsTimer2.h>
+
 int lcd_key     = 0;
 int adc_key_in  = 0;
 #define btnRIGHT  0
@@ -11,12 +13,18 @@ int adc_key_in  = 0;
 
 #define SW 2
 #define IN A1
+#define TTLPin 3
 
 LiquidCrystal lcd(8, 9, 4, 5, 6, 7);
 
-int th = 0;
+float th = 0;
 int len = 0;
 int phase = 0;
+
+
+void timer_int(){
+    
+}
 
 int read_LCD_buttons(){
  adc_key_in = analogRead(0);      // read the value from the sensor 
@@ -37,16 +45,16 @@ int change_th(){
   while(true){
     display_lcd();
     //lcd.blink();
-    delay(100);
+    delay(50);
      switch(read_LCD_buttons()){
 
         case 0://RIGHT
           return 1;
         case 1://up
-          th++;
+          th = th + 0.01;
           break;
         case 2:
-          th--;
+          th = th - 0.01;
           break;//down
         case 4: //select
           return 0;
@@ -55,13 +63,13 @@ int change_th(){
           break;
       
     }
-    if(th == 99 || th < 0 ) th = 0;
+    if(th == 9.9 || th < 0 ) th = 0;
   }
 }
 int change_len(){
   while(true){
     display_lcd();
-    delay(100);
+    delay(50);
      switch(read_LCD_buttons()){
         case 0://RIGHT
           return 1;
@@ -84,7 +92,7 @@ int change_len(){
 int change_phase(){
   while(true){
     display_lcd();
-    delay(100);
+    delay(50);
      switch(read_LCD_buttons()){
 
         case 0://RIGHT
@@ -108,38 +116,41 @@ int change_phase(){
 
 void display_lcd(){
 lcd.setCursor(0,0); 
-lcd.print("Th = 0.");
+lcd.print("Th =");
 lcd.print(th);
 lcd.setCursor(0,1); 
 lcd.print("Len=");
 lcd.print(len);
 //lcd.setCursor(0,1); 
-lcd.print(" phase=");
-lcd.print(phase);
+//lcd.print(" ph=");
+//lcd.print(phase);
 }
 
 void setup() {
   lcd.begin(16, 2);
   pinMode(SW,INPUT_PULLUP);
+  pinMode(TTLPin,OUTPUT);
   Serial.begin(9600);
+ // MsTimer2::set(1, timer_int);
+  //MsTimer2::start();
   
 }
 
 void loop() {
   while(true){
     if(change_th() == 1) break;
-    delay(50);
+    delay(200);
     if(change_len() == 1) break;
-    delay(50);
-    if(change_phase() == 1) break;
-    delay(50);
+    delay(200);
+    //if(change_phase() == 1) break;
+    //delay(200);
   }
  
   label1: //ジャンプ用ラベル
   
   lcd.clear(); 
   lcd.print("waiting");
-  delay(1000);
+  delay(500);
 
   float ave = 0;
   float sd = 0;
@@ -178,20 +189,46 @@ void loop() {
   lcd.print("waiting");
 
   byte flag = 0;
+  byte flag_d = 1; //ダミーパルス用フラグ
+
+  float out_1;
+  float out_2;
+  float out_3;
+  
+  unsigned long before_time = millis();
+  
   while(true){
-    if(digitalRead(SW) == 1){
-      if(flag == 0){
+    if(digitalRead(SW) == 1){ //フットスイッチが押されている時
+      if(flag == 0){ //初回にLCDクリア
         lcd.clear();
         flag = 1;
       }
-      if(read_LCD_buttons() == 0){
+
+
+      
+      out_1 = (analogRead(IN) - ave) / sd;
+      out_2 = (analogRead(IN) - ave) / sd;
+      out_3 = (analogRead(IN) - ave) / sd;
+
+      if(out_1 > th && out_1 - out_2 < 0 && out_2 - out_3 >= 0 &&  millis() - before_time > 100){ //ノイズが来た時に連続して反応しないように7[Hz]の T = 140[ms],少なめに見積もって100[ms]経過しないと次のパルスを出さない
+        before_time = millis();
+        flag_d = 0;
+        digitalWrite(TTLPin,HIGH);
+        delay(len);
+      }else if(millis() - before_time > 160 && flag_d == 0){
+        before_time = millis();
+        flag_d = 1; //2回連続ではダミーパルスを出さないようにする
+        digitalWrite(TTLPin,HIGH);
+        delay(len);
+      }
+        digitalWrite(TTLPin,LOW); 
+        lcd.setCursor(0,0); 
+        lcd.print(out_1);
+        Serial.println(out_1);
+        
+      }
+      if(read_LCD_buttons() == 0){ //RIGHTが押されたら
         goto label1;
       }
-      float out = (analogRead(IN) - ave) / sd;
-      lcd.setCursor(0,0); 
-      lcd.print(out);
-      Serial.println(out);
-    }
-    
-  }
+   }
 }
