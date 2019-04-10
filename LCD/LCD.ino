@@ -17,8 +17,8 @@ int adc_key_in  = 0;
 
 LiquidCrystal lcd(8, 9, 4, 5, 6, 7);
 
-float th = 0;
-int len = 0;
+float th = 0.8;
+int len = 10;
 int phase = 0;
 
 int read_LCD_buttons(){
@@ -39,7 +39,8 @@ int read_LCD_buttons(){
 int change_th(){
   while(true){
     display_lcd();
-    //lcd.blink();
+    lcd.setCursor(0,0);
+    lcd.print("*");
     delay(50);
      switch(read_LCD_buttons()){
 
@@ -64,6 +65,8 @@ int change_th(){
 int change_len(){
   while(true){
     display_lcd();
+    lcd.setCursor(0,1);
+    lcd.print("*");
     delay(50);
      switch(read_LCD_buttons()){
         case 0://RIGHT
@@ -81,12 +84,14 @@ int change_len(){
           break;
       
     }
-    if(len== 99 || th < 0 ) th = 0;
+    if(len== 150 || th < 0 ) th = 0;
   }
 }
 int change_phase(){
   while(true){
     display_lcd();
+    lcd.setCursor(8,1);
+    lcd.print("*");
     delay(50);
      switch(read_LCD_buttons()){
 
@@ -105,19 +110,19 @@ int change_phase(){
           break;
       
     }
-    if(phase == 99 || phase < 0 ) th = 0;
+    if(phase == 240 || phase < 0 ) phase = 0;
   }
 }
 
 void display_lcd(){
 lcd.setCursor(0,0); 
-lcd.print("Th =");
+lcd.print(" Th =");
 lcd.print(th);
 lcd.setCursor(0,1); 
-lcd.print("Len=");
+lcd.print(" Len=");
 lcd.print(len);
 //lcd.setCursor(0,1); 
-lcd.print(" ph=");
+lcd.print("  ph=");
 lcd.print(phase);
 }
 
@@ -126,8 +131,6 @@ void setup() {
   pinMode(SW,INPUT_PULLUP);
   pinMode(TTLPin,OUTPUT);
   Serial.begin(9600);
-  MsTimer2::set(1, timer1mS);
-  MsTimer2::start();
   
 }
 
@@ -144,35 +147,34 @@ void loop() {
   label1: //ジャンプ用ラベル
   
   lcd.clear(); 
-  lcd.print("waiting");
+  lcd.print("waiting for");
+  lcd.setCursor(0,1);
+  lcd.print("wave learning");
   delay(500);
 
   float ave = 0;
   float sd = 0;
-  //while(digitalRead(SW) == 0){
-    //lcd.setCursor(0,0); 
-    //lcd.print("waiting");
-
+  while(read_LCD_buttons() != 0){//波形学習ボタン待ち
+  }
   long i = 0;
-  int data[256];
+  int data[700];
   long sum = 0;
   long sum2 = 0;
 
-  if(read_LCD_buttons() == 0){
-    for(int i = 0; i< 256;i++){
-      lcd.setCursor(0,0);
-      lcd.print("setting...");
-      data[i] = analogRead(IN);
-      sum = sum + data[i];
-      ave = sum / i;
-    }
-    for(int j = 0; j < 256; j++){
-      sum2 = sum2 + pow((data[j] - ave),2);
-    }
-    sd = pow(sum2/256,0.5); 
-    break;
+  lcd.clear();
+  
+  for(int i = 0; i< 700;i++){
+    lcd.setCursor(0,0);
+    lcd.print("setting...");
+    data[i] = analogRead(IN);
+    sum = sum + data[i];
+    ave = sum / i;
+    delay(7); //128Hzだとして700回でおよそ５秒
   }
-  //}
+  for(int j = 0; j < 700; j++){
+    sum2 = sum2 + pow((data[j] - ave),2);
+  }
+  sd = pow(sum2/700,0.5); 
   
 
   lcd.setCursor(0,0); 
@@ -195,21 +197,26 @@ void loop() {
   float out_3;
   
   unsigned long before_time = millis();
+
+  byte SW_flag = 0;
+  
   
   while(true){ //測定時メインループ
-    if(digitalRead(SW) == 1){ //フットスイッチが押されている時
-      if(flag == 0){ //初回にLCDクリア
-        lcd.clear();
-        flag = 1;
+    while(true){
+      if(digitalRead(SW) == 1) {
+         delay(500);
+         lcd.clear();
+         lcd.setCursor(0,0);
+         lcd.print("running...");
+         break;       
       }
-
-
-      
+    }
+    while(true){
       out_1 = (analogRead(IN) - ave) / sd;
       out_2 = (analogRead(IN) - ave) / sd;
       out_3 = (analogRead(IN) - ave) / sd;
 
-      if(out_1 > th && out_1 - out_2 < 0 && out_2 - out_3 >= 0 &&  millis() - before_time > 100){ //ノイズが来た時に連続して反応しないように7[Hz]の T = 140[ms],少なめに見積もって100[ms]経過しないと次のパルスを出さない
+      if(out_1 > th && out_1 - out_2 < 0 && out_2 - out_3 >= 0 &&  millis() - before_time > 100 &&TTL_flag == 0 ){ //ノイズが来た時に連続して反応しないように7[Hz]の T = 140[ms],少なめに見積もって100[ms]経過しないと次のパルスを出さない
         before_time = millis();
         flag_d = 0;
         TTL_flag = 1;
@@ -221,28 +228,32 @@ void loop() {
         flag_d = 1; //2回連続ではダミーパルスを出さないようにする
         TTL_flag = 1;
         TTL_time = millis();
-        //digitalWrite(TTLPin,HIGH);
-        //delay(len);
       }
       if(TTL_flag == 1 && millis() - TTL_time > phase){ //TTLフラグONからphase分立ったら実行される
-        //digitalWrite(TTLPin,HIGH);
-        //delay(len);
+        digitalWrite(TTLPin,HIGH);
         Phase_time = millis();
-        Phase_Flag = 1;
-        digitalWrite(TTLPin,HIGH)
+        Phase_Flag = 1;   
         TTL_flag = 0;
       }if(Phase_Flag == 1 && millis() - Phase_time > len){ //パルスの発生時間がlenを超えたらLOWにする
         digitalWrite(TTLPin,LOW);
         Phase_Flag = 0;
       }
-        digitalWrite(TTLPin,LOW); 
-        lcd.setCursor(0,0); 
-        lcd.print(out_1);
-        Serial.println(out_1);
-        
-      }
+        //digitalWrite(TTLPin,LOW); 
+        //lcd.setCursor(0,0); 
+        //lcd.print(out_1);
+        //Serial.println(out_1);
       if(read_LCD_buttons() == 0){ //RIGHTが押されたら
         goto label1;
       }
-   }
+      if(digitalRead(SW) == 1){
+         delay(500);
+         lcd.clear();
+         lcd.setCursor(0,0);
+         lcd.print("waiting for");
+         lcd.setCursor(0,1);
+         lcd.print("re start");
+         break;
+      }
+    }
+  }
 }
