@@ -131,7 +131,7 @@ void setup() {
   pinMode(SW,INPUT_PULLUP);
   pinMode(TTLPin,OUTPUT);
   Serial.begin(9600);
-  
+  phase = phase + 10;//ずれるのを防止
 }
 
 void loop() {
