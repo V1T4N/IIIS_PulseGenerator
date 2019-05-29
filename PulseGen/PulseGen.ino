@@ -148,13 +148,17 @@ void loop() {
   float data_2;
   float data_3;
   unsigned long before_time = millis();
-
+  unsigned long dynamic_freq;
+  
   while(true){
     data_1 = analogRead(SigIn) / maxdata;
     data_2 = analogRead(SigIn) / maxdata;
     data_3 = analogRead(SigIn) / maxdata;
+    
+    dynamic_freq = millis() - before_time //前回のshockからの経過時間
+    
     //2019_4_2 ピーク値をグラフのを使って検出する
-    if(data_2 > threthord && data_1 - data_2 < 0 && data_2 - data_3 > 0 &&  millis() - before_time > 100){ //ノイズが来た時に連続して反応しないように7[Hz]の T = 140[ms],少なめに見積もって100[ms]経過しないと次のパルスを出さない
+    if(data_2 > threthord && data_1 - data_2 < 0 && data_2 - data_3 > 0 &&  dynamic_freq > 100){ //ノイズが来た時に連続して反応しないように7[Hz]の T = 140[ms],少なめに見積もって100[ms]経過しないと次のパルスを出さない
       before_time = millis();
       flag = 0;
       digitalWrite(TTLPin,HIGH);

@@ -121,7 +121,7 @@ lcd.setCursor(0,1);
 lcd.print(" Len=");
 lcd.print(len);
 //lcd.setCursor(0,1); 
-lcd.print("  ph=");
+lcd.print(" ph=");
 lcd.print(phase);
 }
 
@@ -130,7 +130,6 @@ void setup() {
   pinMode(SW,INPUT_PULLUP);
   pinMode(TTLPin,OUTPUT);
   Serial.begin(9600);
-  phase = phase + 10;//ずれるのを防止
 }
 
 void loop() {
@@ -191,9 +190,11 @@ void loop() {
   unsigned long TTL_time = 0;
   unsigned long Phase_time = 0;
 
-  float out_1;
+  /*float out_1;
   float out_2;
-  float out_3;
+  float out_3;*/
+
+  float out[5];
   
   unsigned long before_time = millis();
   unsigned long dynamic_freq;
@@ -211,24 +212,31 @@ void loop() {
       }
     }
     while(true){
+      /*
       out_1 = (analogRead(IN) - ave) / sd;
       out_2 = (analogRead(IN) - ave) / sd;
       out_3 = (analogRead(IN) - ave) / sd;
-　　    
+      */
       
-      if(out_1 > th && out_1 - out_2 < 0 && out_2 - out_3 >= 0 &&  millis() - before_time> 100 &&TTL_flag == 0 ){ //ノイズが来た時に連続して反応しないように7[Hz]の T = 140[ms],少なめに見積もって100[ms]経過しないと次のパルスを出さない
+      out[0] = out[1]; //スライドして更新
+      out[1] = out[2];
+      out[2] = out[3];
+      out[3] = out[4];
+      out[4] = (analogRead(IN) - ave) / sd;  
+      
+      if(out[2] > th  && out[0]<out[1] && out[1]<out[2] && out[2]>out[3] && out[3]>out[4] &&  millis() - before_time> 100 &&TTL_flag == 0){ //ノイズが来た時に連続して反応しないように7[Hz]の T = 140[ms],少なめに見積もって100[ms]経過しないと次のパルスを出さない
         dynamic_freq = millis() - before_time;
         before_time = millis();
         flag_d = 0;
         TTL_flag = 1;
         TTL_time = millis();
         
-      }else if(millis() - before_time > 160 && flag_d == 0){
+      }/*else if(millis() - before_time > 160 && flag_d == 0){
         before_time = millis();
         flag_d = 1; //2回連続ではダミーパルスを出さないようにする
         TTL_flag = 1;
         TTL_time = millis();
-      }
+      }*/
       if(TTL_flag == 1 && millis() - TTL_time > (phase/180.0)*dynamic_freq){ //TTLフラグONからphase分立ったら実行される
         digitalWrite(TTLPin,HIGH);
         Phase_time = millis();
@@ -238,10 +246,6 @@ void loop() {
         digitalWrite(TTLPin,LOW);
         Phase_Flag = 0;
       }
-        //digitalWrite(TTLPin,LOW); 
-        //lcd.setCursor(0,0); 
-        //lcd.print(out_1);
-        //Serial.println(out_1);
       if(read_LCD_buttons() == 0){ //RIGHTが押されたら
         goto label1;
       }
