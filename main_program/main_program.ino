@@ -58,7 +58,10 @@ int change_th(){
           break;
       
     }
-    if(th == 9.9 || th < 0 ) th = 0;
+    if(th == 9.9 || th < 0 ) {
+      th = 0;
+      lcd.clear();
+    }
   }
 }
 int change_len(){
@@ -81,15 +84,18 @@ int change_len(){
           break;
         default:
           break;
-      
     }
-    if(len== 150 || th < 0 ) th = 0;
+    if(len== 150 || th < 0 ) {
+      th = 0;
+      lcd.clear();
+    }
   }
 }
 int change_phase(){
   while(true){
     display_lcd();
-    lcd.setCursor(8,1);
+    lcd.setCursor(7
+    ,1);
     lcd.print("*");
     delay(50);
      switch(read_LCD_buttons()){
@@ -109,11 +115,15 @@ int change_phase(){
           break;
       
     }
-    if(phase == 181 || phase < 0 ) phase = 0;
+    if(phase == 181 || phase < 0 ) {
+      phase = 0;
+      lcd.clear();
+    }
   }
 }
 
 void display_lcd(){
+lcd.clear();
 lcd.setCursor(0,0); 
 lcd.print(" Th =");
 lcd.print(th);
@@ -237,7 +247,7 @@ void loop() {
         TTL_flag = 1;
         TTL_time = millis();
       }*/
-      if(TTL_flag == 1 && millis() - TTL_time > (phase/180.0)*dynamic_freq){ //TTLフラグONからphase分立ったら実行される
+      if(TTL_flag == 1 && millis() - TTL_time > (phase/360.0)*dynamic_freq){ //TTLフラグONからphase分立ったら実行される
         digitalWrite(TTLPin,HIGH);
         Phase_time = millis();
         Phase_Flag = 1;   
