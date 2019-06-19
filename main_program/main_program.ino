@@ -230,11 +230,9 @@ void loop() {
       
       out[0] = out[1]; //スライドして更新
       out[1] = out[2];
-      out[2] = out[3];
-      out[3] = out[4];
-      out[4] = (analogRead(IN) - ave) / sd;  
+      out[2] = (analogRead(IN) - ave) / sd;  
       
-      if(out[2] > th  && out[0]<out[1] && out[1]<out[2] && out[2]>out[3] && out[3]>out[4] &&  millis() - before_time> 100 &&TTL_flag == 0){ //ノイズが来た時に連続して反応しないように7[Hz]の T = 140[ms],少なめに見積もって100[ms]経過しないと次のパルスを出さない
+      if(out[1] > th  && out[0]<out[1] && out[1]<= out[2]  &&  millis() - before_time> 100 &&TTL_flag == 0){ //ノイズが来た時に連続して反応しないように7[Hz]の T = 140[ms],少なめに見積もって100[ms]経過しないと次のパルスを出さない
         dynamic_freq = millis() - before_time;
         before_time = millis();
         flag_d = 0;
